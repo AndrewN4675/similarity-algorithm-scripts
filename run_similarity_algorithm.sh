@@ -3,7 +3,7 @@
 SCRIPT_DIR="$(dirname "$0")"
 SA_CONFIG_FILE="$SCRIPT_DIR/sa.config"
 
-if [ $# -lt 2 ]; then
+if [ $# -lt 3 ]; then
 	echo "Usage: $0 PROJECT INPUT_DIR RESULTS_DIR"
 	echo "   PROJECT      project name to analyze"
 	echo "   INPUTS_DIR   path to directory containing extracted jar directories"
