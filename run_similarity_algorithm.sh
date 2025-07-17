@@ -45,11 +45,33 @@ fi
 PROJECT_DIR="$(realpath "$INPUT_DIR/$PROJECT")"
 RESULTS_FILE="$(realpath "$RESULTS_DIR/$PROJECT.xml")"
 
+TIMEOUT_FILE="$(realpath "$RESULTS_DIR/timeout")"
+FAILURE_FILE="$(realpath "$RESULTS_DIR/failure")"
+SUCCESS_FILE="$(realpath "$RESULTS_DIR/success")"
+
 if [ ! -d "$PROJECT_DIR" ]; then
 	echo "No project directory at '$PROJECT_DIR'"
 	exit -3
 fi
 
 echo "Running similarity algorithm on project $PROJECT"
-$JAVA_BINARY $JAVA_ARGS -jar "$SA_JAR" -target "$PROJECT_DIR" -output "$RESULTS_FILE"
+if [ -z $SA_TIMEOUT ]; then
+	$JAVA_BINARY ${JAVA_ARGS:-} -jar "$SA_JAR" -target "$PROJECT_DIR" -output "$RESULTS_FILE"
+	RETURN_CODE=$?
+else
+	timeout --signal "${SA_TIMEOUT_SIG:-TERM}" "$SA_TIMEOUT" $JAVA_BINARY ${JAVA_ARGS:-} -jar "$SA_JAR" -target "$PROJECT_DIR" -output "$RESULTS_FILE"
+	RETURN_CODE=$?
+fi
+
+echo "RETURN CODE: $RETURN_CODE"
+
+if [ $RETURN_CODE -eq 124 ] || [ $RETURN_CODE -eq 137 ]; then
+	echo "Similarity algorithm on project $PROJECT timed out"
+	echo "$PROJECT" >> "$TIMEOUT_FILE"
+elif [ $RETURN_CODE -ne 0 ]; then
+	echo "Similarity algorithm on project $PROJECT failed"
+	echo "$PROJECT" >> "$FAILURE_FILE"
+else
+	echo "$PROJECT" >> "$SUCCESS_FILE"
+fi
 
