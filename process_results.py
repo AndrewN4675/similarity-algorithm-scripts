@@ -29,6 +29,8 @@ def parse_instance(instance: Element, pattern_name: str):
             'Proxy': ['RealSubject', 'Proxy'],
             'Proxy2': ['RealSubject', 'Proxy'],
             'Chain of Responsibility': ['Handler'],
+            'Command': ['ConcreteCommand', 'Receiver'],
+            'Prototype': ['Client', 'Prototype'],
             }
 
     # If there are no participating roles for the pattern, there is no work
