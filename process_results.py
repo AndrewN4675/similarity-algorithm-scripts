@@ -119,6 +119,8 @@ def main():
     project_results_file = os.path.join(results_dir, project + '.xml')
     project_out_instances_file = os.path.join(results_dir, project + '.csv')
 
+    empty_projects_file = os.path.join(results_dir, 'empty')
+
     dom = xml.dom.minidom.parse(project_results_file)
     dom: Document
 
@@ -135,6 +137,19 @@ def main():
     pattern_elements = parse_patterns(system)
     # Set of all classes in the project
     all_elements = find_classes(project_dir)
+
+    # If the project empty, pandas complains so we handle that case here
+    if len(all_elements) == 0:
+        print('No classes in project!')
+
+        # Creating an empty results file so we have some output
+        open(project_out_instances_file, 'w').close()
+
+        # Also add the project to a logfile of empty projects
+        with open(empty_projects_file, 'a') as file:
+            file.write(project + '\n')
+
+        return
 
     # First we need to create a dataframe that contains classes with their pattern
     instances_df = pandas.DataFrame(columns=['instance', 'pattern'])
