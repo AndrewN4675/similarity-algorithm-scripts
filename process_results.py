@@ -10,26 +10,39 @@ from xml.dom.minidom import Document
 from xml.dom.minidom import Element
 
 
-def parse_instance_factory(instance):
-    print('PARSING fac')
-    return set([])
+def parse_instance(instance: Element, pattern_name: str):
+    # Dictionary containing list of role names to include for each pattern.
+    # Results XML contains methods, not just classes, so we need to filter
+    # what we need out.
+    participating_roles = {
+            'Factory Method': ['Creator'],
+            '(Object)Adapter': ['Adaptee', 'Adapter']
+            }
 
+    # If there are no participating roles for the pattern, there is no work
+    if pattern_name not in participating_roles:
+        return set([])
 
-def parse_instance_singleton(instance):
-    print('PARSING Singleton')
-    return set([])
+    instance_elements = set([])
+
+    for role in instance.childNodes:
+        role: Element
+
+        if role.nodeName != 'role':
+            continue
+
+        role_name = role.getAttribute('name')
+        role_elem = role.getAttribute('element')
+
+        if role_name in participating_roles[pattern_name]:
+            instance_elements.add(role_elem)
+
+    return instance_elements
 
 
 def parse_patterns(system):
     # Dictionary containing a set of all classes participating in a pattern.
-    patterns = defaultdict(set)
-
-    # Dictionary of instance parsers, where the key is the pattern name as in
-    # the results XML. Each parser returns a set of classes from that instance.
-    instance_handlers = {
-            'Factory Method': parse_instance_factory,
-            'Singleton': parse_instance_singleton
-            }
+    pattern_elements = defaultdict(set)
 
     for pattern in system.childNodes:
         pattern: Element
@@ -41,17 +54,7 @@ def parse_patterns(system):
 
         pattern_name = pattern.getAttribute('name')
 
-        if pattern_name not in instance_handlers:
-            print('Handler not found for', pattern_name)
-            continue
-
         print('Parsing instances of', pattern_name)
-
-        # Each of the patterns have children containing instances. Each pattern
-        # has its own parser to parse one of these instances. Finding all
-        # instances here reduces redundancy compared to having a handler for
-        # each pattern.
-        instance_parser = instance_handlers[pattern_name]
 
         for instance in pattern.childNodes:
             instance: Element
@@ -59,8 +62,10 @@ def parse_patterns(system):
             if instance.nodeName != 'instance':
                 continue
 
-            instance_classes = instance_parser(instance)
-            patterns[pattern_name] = patterns[pattern_name] | instance_classes
+            instance_elements = parse_instance(instance, pattern_name)
+            pattern_elements[pattern_name] = pattern_elements[pattern_name] | instance_elements
+
+    return pattern_elements
 
 
 def main():
@@ -86,6 +91,7 @@ def main():
             system = child
 
     patterns = parse_patterns(system)
+    print(patterns)
 
 
 if __name__ == '__main__':
