@@ -5,6 +5,7 @@ import sys
 
 from collections import defaultdict
 
+import pandas
 import xml.dom.minidom
 from xml.dom.minidom import Document
 from xml.dom.minidom import Element
@@ -94,6 +95,7 @@ def main():
 
     project_dir = os.path.join(input_dir, project)
     project_results_file = os.path.join(results_dir, project + '.xml')
+    project_out_instances_file = os.path.join(results_dir, project + '.csv')
 
     dom = xml.dom.minidom.parse(project_results_file)
     dom: Document
@@ -105,8 +107,21 @@ def main():
         if child.nodeName == 'system':
             system = child
 
-    patterns = parse_patterns(system)
-    print(patterns)
+    pattern_elements = parse_patterns(system)
+
+    instances_df = pandas.DataFrame(columns=['instance', 'pattern'])
+
+    for pattern in pattern_elements.keys():
+        # Pad with pattern name to fit pandas expected format
+        padded_records = [
+                {'pattern': pattern, 'instance': e}
+                for e in pattern_elements[pattern]
+                ]
+
+        new_instances_df = pandas.DataFrame.from_records(padded_records)
+        instances_df = pandas.concat([instances_df, new_instances_df])
+
+    instances_df.to_csv(project_out_instances_file, index=False)
 
 
 if __name__ == '__main__':
