@@ -50,8 +50,11 @@ def parse_instance(instance: Element, pattern_name: str):
         role_name = role.getAttribute('name')
         role_elem = role.getAttribute('element')
 
+        # Remove the template(?) part from class name
+        class_name = role_elem.partition('$')[0]
+
         if role_name in participating_roles[pattern_name]:
-            instance_elements.add(role_elem)
+            instance_elements.add(class_name)
 
     return instance_elements
 
@@ -84,6 +87,7 @@ def parse_patterns(system):
     return pattern_elements
 
 
+# Finds all classes inside project directory
 def find_classes(project_dir):
     classes = set([])
 
