@@ -16,11 +16,24 @@ def parse_instance(instance: Element, pattern_name: str):
     # what we need out.
     participating_roles = {
             'Factory Method': ['Creator'],
-            '(Object)Adapter': ['Adaptee', 'Adapter']
+            'Singleton': ['Singleton'],
+            '(Object)Adapter': ['Adapter', 'Adaptee'],
+            'Composite': ['Component', 'Composite'],
+            'State': ['Context', 'State'],
+            'Bridge': ['Abstraction', 'Implementor'],
+            'Template Method': ['AbstractClass'],
+            'Decorator': ['Component', 'Decorator'],
+            'Observer': ['Observer', 'Subject'],
+            'Strategy': ['Strategy', 'Context'],
+            'Visitor': ['Visitor', 'ConcreteElement'],
+            'Proxy': ['RealSubject', 'Proxy'],
+            'Proxy2': ['RealSubject', 'Proxy'],
+            'Chain of Responsibility': ['Handler'],
             }
 
     # If there are no participating roles for the pattern, there is no work
     if pattern_name not in participating_roles:
+        print('No used roles for pattern', pattern_name)
         return set([])
 
     instance_elements = set([])
