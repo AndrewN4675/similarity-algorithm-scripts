@@ -84,6 +84,26 @@ def parse_patterns(system):
     return pattern_elements
 
 
+def find_classes(project_dir):
+    classes = set([])
+
+    for root, dirs, files in os.walk(project_dir):
+        for file in files:
+            base, ext = os.path.splitext(file)
+
+            package_as_path = os.path.relpath(root, project_dir)
+            package = package_as_path.replace('/', '.')
+
+            # Remove the template(?) part of different class instances
+            class_name = base.partition('$')[0]
+            class_fqn = package + '.' + class_name
+
+            if ext == '.class':
+                classes.add(class_fqn)
+
+    return classes
+
+
 def main():
     if len(sys.argv) < 4:
         print('Usage: process_results.py PROJECT INPUT_DIR RESULTS_DIR')
