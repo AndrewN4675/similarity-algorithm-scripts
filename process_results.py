@@ -73,8 +73,6 @@ def parse_patterns(system):
 
         pattern_name = pattern.getAttribute('name')
 
-        print('Parsing instances of', pattern_name)
-
         for instance in pattern.childNodes:
             instance: Element
 
