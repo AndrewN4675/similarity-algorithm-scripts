@@ -124,6 +124,8 @@ def main():
     dom = xml.dom.minidom.parse(project_results_file)
     dom: Document
 
+    # "system" is the root(?) element of the XML file. Dunno if that's the
+    # right terminology, but ehhh o~o
     system: Element = None
     for child in dom.childNodes:
         child: Element
@@ -131,8 +133,12 @@ def main():
         if child.nodeName == 'system':
             system = child
 
+    # Dictionary of classes participating in each pattern
     pattern_elements = parse_patterns(system)
+    # Set of all classes in the project
+    all_elements = find_classes(project_dir)
 
+    # First we need to create a dataframe that contains classes with their pattern
     instances_df = pandas.DataFrame(columns=['instance', 'pattern'])
 
     for pattern in pattern_elements.keys():
@@ -145,7 +151,25 @@ def main():
         new_instances_df = pandas.DataFrame.from_records(padded_records)
         instances_df = pandas.concat([instances_df, new_instances_df])
 
-    instances_df.to_csv(project_out_instances_file, index=False)
+    # Using class name as index so we can perform difference on it
+    instances_df.set_index('instance', inplace=True)
+
+    # Creating a dataframe containing "None" for all classes that we can use to
+    # fill in classes without patterns
+    padded_records = [
+            {'pattern': 'None', 'instance': e}
+            for e in all_elements
+            ]
+
+    all_instances_df = pandas.DataFrame.from_records(padded_records)
+    all_instances_df.set_index('instance', inplace=True)
+
+    # The full dataset contains classes with patterns and without,
+    # create it using difference
+    missing_index = all_instances_df.index.difference(instances_df.index)
+    instances_df = pandas.concat([instances_df, all_instances_df.loc[missing_index]])
+
+    instances_df.to_csv(project_out_instances_file)
 
 
 if __name__ == '__main__':
