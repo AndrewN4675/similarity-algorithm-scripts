@@ -106,15 +106,90 @@ def find_classes(project_dir):
     return classes
 
 
-def main():
-    if len(sys.argv) < 4:
-        print('Usage: process_results.py PROJECT INPUT_DIR RESULTS_DIR')
-        exit(-1)
+def find_classes_from_xml(system: Element):
+    '''Extract all unique class names from XML patterns'''
+    classes = set([])
+    
+    if system is None:
+        return classes
+    
+    for pattern in system.childNodes:
+        pattern: Element
+        
+        if pattern.nodeName != 'pattern':
+            continue
+        
+        for instance in pattern.childNodes:
+            instance: Element
+            
+            if instance.nodeName != 'instance':
+                continue
+            
+            for role in instance.childNodes:
+                role: Element
+                
+                if role.nodeName != 'role':
+                    continue
+                
+                element = role.getAttribute('element')
+                if element:
+                    # Extract class name from element (format: "class.path.ClassName" or "ClassName::field" etc)
+                    class_name = element.split('::')[0]  # Get the part before :: if it exists
+                    if class_name:
+                        classes.add(class_name)
+    
+    return classes
 
-    project = sys.argv[1]
-    input_dir = sys.argv[2]
-    results_dir = sys.argv[3]
 
+def main(project=None, input_dir=None, results_dir=None):
+    # If called from command line with sys.argv
+    if project is None:
+        if len(sys.argv) < 2:
+            print('Usage: process_results.py RESULTS_DIR [PROJECT_NAME ...]')
+            print()
+            print('If no PROJECT_NAME is provided, processes all .xml files in RESULTS_DIR')
+            exit(-1)
+
+        results_dir = sys.argv[1]
+        
+        if not os.path.isdir(results_dir):
+            print(f'Error: RESULTS_DIR does not exist: {results_dir}')
+            exit(-1)
+        
+        # If specific projects are named, process those
+        if len(sys.argv) > 2:
+            for proj in sys.argv[2:]:
+                input_dir = results_dir
+                main(project=proj, input_dir=input_dir, results_dir=results_dir)
+            return
+        else:
+            # Auto-discover all XML files
+            xml_files = [f for f in os.listdir(results_dir) if f.endswith('.xml')]
+            
+            if not xml_files:
+                print(f'No .xml files found in {results_dir}')
+                exit(-1)
+            
+            print(f'Found {len(xml_files)} project(s) to process:')
+            for xml_file in xml_files:
+                print(f'  - {xml_file}')
+            print()
+            
+            for xml_file in sorted(xml_files):
+                proj = xml_file[:-4]  # Remove .xml extension
+                print(f'Processing: {proj}...')
+                try:
+                    main(project=proj, input_dir=results_dir, results_dir=results_dir)
+                    print(f'  ✓ Done\n')
+                except Exception as e:
+                    print(f'  ✗ Error: {e}\n')
+            return
+    
+    # Called from main() with arguments, process single project
+    if not os.path.isfile(os.path.join(results_dir, project + '.xml')):
+        raise FileNotFoundError(f'Missing XML file: {project}.xml in {results_dir}')
+    
+    # Original main logic
     project_dir = os.path.join(input_dir, project)
     project_results_file = os.path.join(results_dir, project + '.xml')
     project_out_instances_file = os.path.join(results_dir, project + '.csv')
@@ -135,8 +210,13 @@ def main():
 
     # Dictionary of classes participating in each pattern
     pattern_elements = parse_patterns(system)
-    # Set of all classes in the project
+    
+    # Set of all classes in the project (try filesystem first, then fallback to XML)
     all_elements = find_classes(project_dir)
+    
+    # If no classes found on filesystem, extract from XML
+    if len(all_elements) == 0:
+        all_elements = find_classes_from_xml(system)
 
     # If the project empty, pandas complains so we handle that case here
     if len(all_elements) == 0:
