@@ -22,7 +22,7 @@ fi
 
 source "$SA_CONFIG_FILE"
 
-if [ -z $JAVA_BINARY ]; then
+if [ -z "$JAVA_BINARY" ]; then
 	echo "JAVA_BINARY not set. Incorrect '$SA_CONFIG_FILE'."
 	exit -2
 fi
@@ -32,7 +32,7 @@ if [ ! -f "$JAVA_BINARY" ]; then
 	exit -2
 fi
 
-if [ -z $SA_JAR ]; then
+if [ -z "$SA_JAR" ]; then
 	echo "SA_JAR not set. Incorrect '$SA_CONFIG_FILE'."
 	exit -2
 fi
@@ -55,11 +55,11 @@ if [ ! -d "$PROJECT_DIR" ]; then
 fi
 
 echo "Running similarity algorithm on project $PROJECT"
-if [ -z $SA_TIMEOUT ]; then
-	$JAVA_BINARY ${JAVA_ARGS:-} -jar "$SA_JAR" -target "$PROJECT_DIR" -output "$RESULTS_FILE"
+if [ -z "$SA_TIMEOUT" ]; then
+	"$JAVA_BINARY" ${JAVA_ARGS:-} -jar "$SA_JAR" -target "$PROJECT_DIR" -output "$RESULTS_FILE"
 	RETURN_CODE=$?
 else
-	timeout --signal "${SA_TIMEOUT_SIG:-TERM}" "$SA_TIMEOUT" $JAVA_BINARY ${JAVA_ARGS:-} -jar "$SA_JAR" -target "$PROJECT_DIR" -output "$RESULTS_FILE"
+	timeout --signal "${SA_TIMEOUT_SIG:-TERM}" "$SA_TIMEOUT" "$JAVA_BINARY" ${JAVA_ARGS:-} -jar "$SA_JAR" -target "$PROJECT_DIR" -output "$RESULTS_FILE"
 	RETURN_CODE=$?
 fi
 
